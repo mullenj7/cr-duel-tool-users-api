@@ -1,0 +1,19 @@
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+
+# editor
+/.vscode
+.idea/*
+
+
+node_modules
+layer
+
+
+# vim temporary files
+*.sw?
+*~
+*.zip
+*.tgz
+
+# unit test database file
+**/setup/data/database.json
