@@ -23,14 +23,19 @@ class ErrorResponse {
 }
 
 const getUserDetails = async (id) => {
-  const params = {
+  // const params = {
+  //   TableName: table,
+  //   Key: {
+  //     id,
+  //   },
+  // };
+
+  const command = new GetItemCommand({
     TableName: table,
     Key: {
-      id,
+      id: { S: id },
     },
-  };
-
-  const command = new GetItemCommand({ params });
+  });
 
   const response = await client.send(command);
 
@@ -44,18 +49,19 @@ exports.handler = async (event) => {
     console.log(event);
     const { pathParameters = {} } = event;
     const { id } = pathParameters;
+    console.log('path params ', pathParameters);
 
     const userDetails = await getUserDetails(id);
 
     console.log(userDetails);
 
     const response = {
-      message: 'User Received',
-      item: userDetails,
-    };
+      "statusCode": 200,
+      "headers": { 'Access-Control-Allow-Origin': '*' },
+      "body": JSON.stringify(userDetails)
+    }
 
     console.log(response);
-
     return response;
   } catch (err) {
     console.log(err);
