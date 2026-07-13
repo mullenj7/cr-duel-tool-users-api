@@ -28,6 +28,7 @@ export const handler = async (event) => {
                 email: { S: userAttributes.email },
                 created: { S: timestamp },
                 lastModified: { S: timestamp },
+                decks: {M: {}},
             }
         });
 

@@ -1,4 +1,5 @@
 const { GetItemCommand, DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, GetCommand } = require('@aws-sdk/lib-dynamodb');
 
 const {
   region,
@@ -8,6 +9,7 @@ const {
 
 // Create DynamoDB document client
 const client = new DynamoDBClient({ convertEmptyValues: true });
+const ddbDocClient = DynamoDBDocumentClient.from(client); // client is DynamoDB client
 
 class ErrorResponse {
   constructor(
@@ -23,21 +25,29 @@ class ErrorResponse {
 }
 
 const getUserDetails = async (id) => {
-  // const params = {
-  //   TableName: table,
-  //   Key: {
-  //     id,
-  //   },
-  // };
-
-  const command = new GetItemCommand({
+  const params = {
     TableName: table,
     Key: {
-      id: { S: id },
+      id: id,
     },
-  });
+  };
 
-  const response = await client.send(command);
+  // const command = new GetItemCommand({
+  //   TableName: table,
+  //   Key: {
+  //     id: { S: id },
+  //   },
+  // });
+
+  // const response = await client.send(command);
+
+  const response = await ddbDocClient.send(
+    new GetCommand({
+      TableName: table,
+      Key: {
+        id: id,
+      },
+    }))
 
   console.log(response);
 
