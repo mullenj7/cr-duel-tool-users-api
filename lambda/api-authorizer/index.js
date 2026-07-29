@@ -7,25 +7,16 @@ const {
 } = process.env;
 
 
-// Add the pool and client IDs in these arrays for pool authentication
-const poolIds = [
-  userPoolId,
-];
-
-const poolClientIds = [
-  userClientId,
-];
-
-
 // Checks token pool and client ID against environment variables
 const verifyUserInPool = (token) => {
-  const decodedToken = jwt.decode(token, {complete: true});
-  const tokenPoolId = decodedToken.iss.split('/').pop();
-  const tokenClientId = decodedToken.aud;
+  const decodedToken = (jwt.decode(token, { complete: true }));
+  const decodedTokenPayload = decodedToken.payload;
+  const tokenPoolId = decodedTokenPayload.iss.split('/').pop();
+  const tokenClientId = decodedTokenPayload.client_id;
   console.log(`Token pool ID: ${tokenPoolId}`);
   console.log(`Token client ID: ${tokenClientId}`);
 
-  return poolIds.includes(tokenPoolId) && poolClientIds.includes(tokenClientId);
+  return (userPoolId === tokenPoolId) && (userClientId === tokenClientId);
 };
 
 // Matches public key in token header to auth response in Cognito
@@ -53,48 +44,59 @@ const matchPublicKey = async (token) => {
   return matchedKey;
 };
 
-const verifyToken = async (token) => {
+const verifyToken = async (token, methodArn) => {
   const matchedKey = await matchPublicKey(token);
+  console.log('matched key', matchedKey);
 
   if (!verifyUserInPool(token)) {
     console.log('User not in pool');
-    return false;
+    return {
+      isAuthorized: false,
+      context: 'User not in pool',
+    };
   }
 
   // Verifies token and checks for expiration
   const asKey = await jose.JWK.asKey(matchedKey);
   const verificationResult = await jose.JWS.createVerify(asKey).verify(token);
-  console.log(`verificationResult: ${verificationResult}`);
 
   const claims = JSON.parse(verificationResult.payload);
-  console.log(`claims: ${claims}`);
+  console.log(`claims: ${JSON.stringify(claims)}`);
 
   const currentTs = Math.floor(new Date() / 1000);
 
-  if (currentTs > claims.exp) {
-    console.log('Token is expired');
-    return false;
-  }
-  return true;
+  const response = {};
+  response.principalId = claims.sub;
+  const policyDocument = {};
+  policyDocument.Version = '2012-10-17';
+  policyDocument.Statement = [];
+  const statementOne = {};
+  statementOne.Action = 'execute-api:Invoke';
+  statementOne.Effect = currentTs > claims.exp ? "Deny" : "Allow"; // if token expired then deny
+  statementOne.Resource = methodArn;
+  policyDocument.Statement[0] = statementOne;
+  response.policyDocument = policyDocument;
+
+  return response;
 };
+
 
 exports.handler = async (event, context) => {
   try {
-  // console.log(event, context);
-  // console.log(JSON.stringify(event));
-  // console.log(JSON.stringify(event.headers));
-  // console.log(event.headers.Authorization);
 
-  // const verified = await verifyToken(event.headers.Authorization);
-  const response = {
-    isAuthorized: true,
-    context: {},
-  };
-
-
-  return response;
-}
- catch (err) {
+    console.log('event', event);
+    console.log(event.authorizationToken);
+    console.log(event.methodArn);
+    const res = await verifyToken(event.authorizationToken, event.methodArn);
+    const response = { // need for cors
+      "statusCode": 200,
+      "headers": { 'Access-Control-Allow-Origin': '*' },
+      "body": res
+    }
+    console.log(JSON.stringify(response));
+    return res;
+  }
+  catch (err) {
     console.log(err);
     const response = {
       isAuthorized: false,
