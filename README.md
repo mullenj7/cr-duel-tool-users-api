@@ -1,6 +1,6 @@
 # Clash Royale Duel Tool Users API
 
-This Repository contains the code for the AWS Lambda functions for the Users API for the Clash Royale Duel Tool App.
+This Repository contains the code for the AWS Lambda functions for the Users API of the Clash Royale Duel Tool App.
 
 The code is written in `Node.js`.
 
