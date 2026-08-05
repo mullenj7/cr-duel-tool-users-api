@@ -11,6 +11,12 @@
     "pino-lambda": "^3.0.1",
     "uuid": "^8.3.2"
   },
+   "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
   "author": "",
   "license": "ISC"
 }
