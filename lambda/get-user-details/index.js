@@ -32,15 +32,6 @@ const getUserDetails = async (id) => {
     },
   };
 
-  // const command = new GetItemCommand({
-  //   TableName: table,
-  //   Key: {
-  //     id: { S: id },
-  //   },
-  // });
-
-  // const response = await client.send(command);
-
   const response = await ddbDocClient.send(
     new GetCommand({
       TableName: table,
